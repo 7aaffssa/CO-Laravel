@@ -2,69 +2,78 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Module;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class ModuleController extends Controller
 {
-    // Display all modules
-    public function index()
+    public function index(Request $request)
     {
-        $modules = DB::table('modules')->orderBy('code')->paginate(10); 
-        return view('modules.index', compact('modules'));
+        $search = $request->input('search');
+        $showAll = $request->has('show_all');
+        
+        $query = Module::query();
+        
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('codeM', 'like', "%$search%")
+                  ->orWhere('titre', 'like', "%$search%");
+            });
+        }
+
+        $allModules = $query->get();
+        $modules = $showAll ? $allModules : $allModules->take(4);
+
+        return view('modules.index', [
+            'modules' => $modules,
+            'totalModules' => $allModules->count(),
+            'showAll' => $showAll,
+            'search' => $search
+        ]);
     }
 
-    // Show create form
-    public function create()
-    {
-        return view('modules.create');
-    }
-
-    // Store new module
     public function store(Request $request)
     {
-        $validatedData = $request->validate([
-            'code' => 'required|integer|unique:modules,code',
-            'title' => 'required|max:255',
-            'hours' => 'required|integer|min:1',
+        $request->validate([
+            'codeM' => 'required|unique:modules|max:10',
+            'titre' => 'required|string|max:255',
+            'masse_horaire' => 'required|integer|min:1'
         ]);
 
-        DB::table('modules')->insert($validatedData);
-
-        return redirect('/modules')->with('success', 'Module créé avec succès!');
+        Module::create($request->all());
+        
+        return redirect()->route('modules.index')
+                         ->with('success', 'Module added successfully');
     }
 
-    // Show edit form
-    public function edit($code)
+    public function update(Request $request, $codeM)
     {
-        $module = DB::table('modules')->where('code', $code)->first();
-        
-        if (!$module) {
-            abort(404);
-        }
-        
-        return view('modules.edit', compact('module'));
-    }
-
-    // Update module
-    public function update(Request $request, $code)
-    {
-        $validatedData = $request->validate([
-            'title' => 'required|max:255',
-            'hours' => 'required|integer|min:1',
+        $request->validate([
+            'titre' => 'required|string|max:255',
+            'masse_horaire' => 'required|integer|min:1'
         ]);
 
-        DB::table('modules')
-            ->where('code', $code)
-            ->update($validatedData);
-
-        return redirect('/modules')->with('success', 'Module modifié avec succès!');
+        $module = Module::findOrFail($codeM);
+        $module->update($request->all());
+        
+        return redirect()->route('modules.index')
+                         ->with('success', 'Module updated successfully');
     }
 
-    // Delete module
-    public function destroy($code)
+    public function destroy($codeM)
     {
-        DB::table('modules')->where('code', $code)->delete();
-        return redirect('/modules')->with('success', 'Module supprimé avec succès!');
+        $module = Module::findOrFail($codeM);
+        $module->delete();
+        
+        return redirect()->route('modules.index')
+                         ->with('success', 'Module deleted successfully');
+    }
+    
+    public function destroyAll()
+    {
+        Module::truncate();
+        
+        return redirect()->route('modules.index')
+                         ->with('success', 'All modules have been deleted');
     }
 }

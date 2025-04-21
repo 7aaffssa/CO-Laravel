@@ -8,26 +8,21 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up()
     {
         Schema::create('modules', function (Blueprint $table) {
-            $table->id('code');
-            $table->string('title');
-            $table->integer('hours');
-            
+            $table->string('codeM', 10)->primary();
+            $table->string('titre');
+            $table->integer('masse_horaire');
             $table->timestamps();
         });
     }
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('modules');
     }

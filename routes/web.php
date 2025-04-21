@@ -5,6 +5,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BaseController;
 use App\Http\Controllers\FormController;
+use App\Http\Controllers\NoteController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\TestController;
 use App\Http\Controllers\UserController;
@@ -12,6 +13,9 @@ use App\Http\Controllers\InvokeController;
 use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RessourceController;
+use App\Http\Controllers\StagiaireController;
+use App\Http\Controllers\NoteStagiaireController;
+use App\Http\Controllers\ProduitController;
 
 // ? TP Routage
 //! Partie 1
@@ -172,5 +176,20 @@ Route::get('/admin', function () {
     return view('admin.dashboardV');
 })->middleware('checkrole:admin');
 
-// ? 
-Route::resource('modules',ModuleController::class);
+// Stagiaire Routes
+// Route::resource('stagiaires', StagiaireController::class);
+// Route::get('stagiaires/{stagiaire}/create-note', [StagiaireController::class, 'createNote'])->name('stagiaires.create-note');
+// Route::post('stagiaires/{stagiaire}/store-note', [StagiaireController::class, 'storeNote'])->name('stagiaires.store-note');
+
+// // Note Routes
+// Route::resource('notes', NoteStagiaireController::class);
+
+// Route::get('/', function () {
+//     return redirect()->route('stagiaires.index');
+// });
+
+
+Route::resource('produits', ProduitController::class);// routes/web.php
+
+Route::resource('modules', ModuleController::class);
+Route::delete('/modules', [ModuleController::class, 'destroyAll'])->name('modules.destroyAll');

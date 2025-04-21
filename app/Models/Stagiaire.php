@@ -8,7 +8,12 @@ use Illuminate\Database\Eloquent\Model;
 class Stagiaire extends Model
 {
     use HasFactory;
-    protected $fillable = [
-        'nom','prenom','age', 'date_naissance'
-    ]
+
+    protected $primaryKey = 'idS';
+    protected $fillable = ['nom', 'prenom', 'age', 'date_naissance'];
+
+    public function notes()
+    {
+        return $this->hasMany(NoteStagiaire::class, 'idS');
+    }
 }

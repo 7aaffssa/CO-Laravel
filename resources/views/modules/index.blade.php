@@ -1,162 +1,212 @@
-@extends('modules.app')
+@extends('layouts.app')
 
 @section('content')
-    <div class="container py-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h1 class="h2 text-primary">Code du module</h1>
-                <h2 class="h4 text-muted">Masse Horaire</h2>
-            </div>
-            <a href="/modules/create" class="btn btn-primary">
-                <i class="fas fa-plus-circle me-2"></i>Ajouter un module
-            </a>
+<div class="container">
+    <h1 class="my-4">Module Management</h1>
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <form action="{{ route('modules.index') }}" method="GET" class="row g-3">
+                <div class="col-md-8">
+                    <input type="text" name="search" class="form-control" placeholder="Search module..." value="{{ request('search') }}">
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary w-100">Search</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Modules List</h5>
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addModuleModal">
+                Add New Module
+            </button>
         </div>
         
-        @if (session('success'))
-            <div class="alert alert-success alert-dismissible fade show">
-                {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Code</th>
+                            <th>Title</th>
+                            <th>Hours</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($modules as $module)
+                        <tr>
+                            <td>{{ $module->codeM }}</td>
+                            <td>{{ $module->titre }}</td>
+                            <td>{{ $module->masse_horaire }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-warning edit-btn" 
+                                        data-code="{{ $module->codeM }}"
+                                        data-titre="{{ $module->titre }}"
+                                        data-masse="{{ $module->masse_horaire }}"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#editModuleModal">
+                                    Edit
+                                </button>
+                                <form action="{{ route('modules.destroy', $module->codeM) }}" method="POST" style="display:inline;">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="4" class="text-center">No modules found</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
-        @endif
 
-        <div class="card shadow-sm border-0">
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th class="py-3 px-4">Code</th>
-                                <th class="py-3 px-4">Titre</th>
-                                <th class="py-3 px-4">Heures</th>
-                                <th class="py-3 px-4 text-end">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($modules as $module)
-                                <tr class="align-middle">
-                                    <td class="px-4 fw-bold">{{ $module->code }}</td>
-                                    <td class="px-4">{{ $module->title }}</td>
-                                    <td class="px-4">
-                                        <span class="badge bg-primary bg-opacity-10 text-primary">
-                                            {{ $module->hours }}h
-                                        </span>
-                                    </td>
-                                    <td class="px-4 text-end">
-                                        <div class="d-flex justify-content-end gap-2">
-                                            <a href="/modules/{{ $module->code }}/edit" 
-                                               class="btn btn-sm btn-outline-warning"
-                                               data-bs-toggle="tooltip" 
-                                               title="Modifier">
-                                                <i class="fas fa-edit">Modifier</i>
-                                            </a>
-                                            <form action="/modules/{{ $module->code }}" method="POST">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" 
-                                                        class="btn btn-sm btn-outline-danger"
-                                                        data-bs-toggle="tooltip" 
-                                                        title="Supprimer"
-                                                        onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce module?')">
-                                                    <i class="fas fa-trash-alt">Supprimer</i>
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <div class="showing-info">
+                    Showing {{ $showAll ? $totalModules : min(4, $totalModules) }} of {{ $totalModules }} results
                 </div>
                 
-                <!-- Pagination -->
-                <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top">
-                    <div class="text-muted small">
-                        Affichage de {{ $modules->firstItem() }} à {{ $modules->lastItem() }} sur {{ $modules->total() }} modules
+                @if($totalModules > 4)
+                    <div class="show-all-section">
+                        @if(!$showAll)
+                            <a href="{{ route('modules.index', array_merge(request()->except('page'), ['show_all' => true])) }}" 
+                               class="btn btn-outline-primary">
+                               Show All
+                            </a>
+                        @else
+                            <a href="{{ route('modules.index', request()->except(['show_all', 'page'])) }}" 
+                               class="btn btn-outline-secondary">
+                               Show Less
+                            </a>
+                        @endif
                     </div>
-                    <nav aria-label="Page navigation">
-                        <ul class="pagination pagination-sm mb-0">
-                            {{ $modules->onEachSide(1)->links('pagination::bootstrap-4') }}
-                        </ul>
-                    </nav>
-                </div>
+                @endif
+            </div>
+
+            <div class="mt-3 text-center">
+                <form action="{{ route('modules.destroyAll') }}" method="POST">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete ALL modules?')">
+                        Delete All Modules
+                    </button>
+                </form>
             </div>
         </div>
     </div>
+</div>
 
-    @push('styles')
-    <style>
-        .card {
-            border-radius: 0.5rem;
-            overflow: hidden;
-        }
-        
-        .table-hover tbody tr:hover {
-            background-color: rgba(13, 110, 253, 0.03);
-        }
-        
-        .table thead th {
-            border-bottom: none;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.8rem;
-            letter-spacing: 0.5px;
-            color: #6c757d;
-        }
-        
-        .btn-outline-warning {
-            color: #ffc107;
-            border-color: #ffc107;
-        }
-        
-        .btn-outline-warning:hover {
-            background-color: #ffc107;
-            color: #000;
-        }
-        
-        .btn-outline-danger {
-            color: #dc3545;
-            border-color: #dc3545;
-        }
-        
-        .btn-outline-danger:hover {
-            background-color: #dc3545;
-            color: #fff;
-        }
-        
-        .badge {
-            padding: 0.35em 0.65em;
-            font-weight: 500;
-        }
-        
-        .page-item.active .page-link {
-            background-color: #0d6efd;
-            border-color: #0d6efd;
-        }
-        
-        .page-link {
-            color: #0d6efd;
-        }
-    </style>
-    @endpush
+<!-- Add Module Modal -->
+<div class="modal fade" id="addModuleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ route('modules.store') }}" method="POST">
+                @csrf
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Add New Module</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="codeM" class="form-label">Module Code</label>
+                        <input type="text" class="form-control" id="codeM" name="codeM" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="titre" class="form-label">Title</label>
+                        <input type="text" class="form-control" id="titre" name="titre" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="masse_horaire" class="form-label">Hours</label>
+                        <input type="number" class="form-control" id="masse_horaire" name="masse_horaire" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save Module</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
-    @push('scripts')
-    <script>
-        // Initialize tooltips
-        document.addEventListener('DOMContentLoaded', function() {
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl)
-            })
+<!-- Edit Module Modal -->
+<div class="modal fade" id="editModuleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="editForm" method="POST">
+                @csrf
+                @method('PUT')
+                <div class="modal-header bg-warning text-white">
+                    <h5 class="modal-title">Edit Module</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_codeM" class="form-label">Module Code</label>
+                        <input type="text" class="form-control" id="edit_codeM" name="codeM" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_titre" class="form-label">Title</label>
+                        <input type="text" class="form-control" id="edit_titre" name="titre" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_masse_horaire" class="form-label">Hours</label>
+                        <input type="number" class="form-control" id="edit_masse_horaire" name="masse_horaire" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-warning text-white">Update Module</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@push('styles')
+<style>
+    .showing-info {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    .show-all-section {
+        margin-left: auto;
+    }
+    .table th, .table td {
+        vertical-align: middle;
+    }
+    .btn-outline-primary, .btn-outline-secondary {
+        border-width: 2px;
+    }
+    .action-buttons .btn {
+        margin-right: 5px;
+    }
+</style>
+@endpush
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.edit-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const code = this.getAttribute('data-code');
+            const titre = this.getAttribute('data-titre');
+            const masse = this.getAttribute('data-masse');
             
-            // Auto-dismiss alerts after 5 seconds
-            setTimeout(() => {
-                const alerts = document.querySelectorAll('.alert')
-                alerts.forEach(alert => {
-                    const bsAlert = new bootstrap.Alert(alert)
-                    bsAlert.close()
-                })
-            }, 5000)
-        })
-    </script>
-    @endpush
+            document.getElementById('edit_codeM').value = code;
+            document.getElementById('edit_titre').value = titre;
+            document.getElementById('edit_masse_horaire').value = masse;
+            
+            document.getElementById('editForm').action = `/modules/${code}`;
+        });
+    });
+});
+</script>
+@endpush
 @endsection
