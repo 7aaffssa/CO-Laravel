@@ -9,14 +9,16 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up()
+    public function up(): void
     {
-        Schema::create('modules', function (Blueprint $table) {
-            $table->string('codeM', 10)->primary();
-            $table->string('titre');
-            $table->integer('masse_horaire');
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('modules')) {
+            Schema::create('modules', function (Blueprint $table) {
+                $table->string('codeM', 10)->primary();
+                $table->string('titre');
+                $table->integer('masse_horaire');
+                $table->timestamps();
+            });
+        }
     }
 
     /**

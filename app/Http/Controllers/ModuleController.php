@@ -31,7 +31,9 @@ class ModuleController extends Controller
             'search' => $search
         ]);
     }
-
+      public function show (Module $module){
+        return dd($module);
+      }
     public function store(Request $request)
     {
         $request->validate([

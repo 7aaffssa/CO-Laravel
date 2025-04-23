@@ -193,3 +193,22 @@ Route::resource('produits', ProduitController::class);// routes/web.php
 
 Route::resource('modules', ModuleController::class);
 Route::delete('/modules', [ModuleController::class, 'destroyAll'])->name('modules.destroyAll');
+use App\Http\Controllers\ClientPhoneController;
+
+Route::get('/test-relationship', function() {
+    $client = Client::create([
+        'name' => 'Web Test User',
+        'email' => 'webtest@example.com'
+    ]);
+    
+    $phone = $client->phone()->create([
+        'number' => '9876543210',
+        'type' => 'home'
+    ]);
+    
+    return [
+        'client' => $client,
+        'phone' => $phone,
+        'phone_owner' => $phone->client
+    ];
+});
